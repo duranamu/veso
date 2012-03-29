@@ -27,6 +27,9 @@ void parse_file_create(char* path)
 		if( stream[0] == ';' 
 		  | stream[0] == '{'
 		  | stream[0] == '}'
+		  | stream[0] == '='
+		  | stream[0] == '|'
+		  | stream[0] == '&'
 		  )
 		{
 			VSParserTakeCStringtoStreamFile(branch_stream,objc_file);
