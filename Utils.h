@@ -6,9 +6,12 @@
 #define nil NULL
 #include<CoreFoundation/CoreFoundation.h>
 #include<pcre.h>
-void
-	offerCurrentWorkingDirectoryWithCString(char* pwd);
-char*  
-	readSourceCodeFromFile (const char *path );
-void
-	maybeUseful();
+#include<stdarg.h>
+SInt32
+	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFArrayRef stringToFindArray,CFArrayRef replacementStringArray);
+SInt32
+	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToFind,CFStringRef replacementString);
+CFMutableStringRef
+	CFMutableStringCreateWithCString(CFAllocatorRef allocator ,const char* cStr,CFIndex maxLength,CFStringEncoding encoding);
+CFMutableArrayRef
+	CFArrayCreateMutableWithObjects(CFAllocatorRef allocator ,const CFArrayCallBacks* callBack,CFTypeRef ref,...);

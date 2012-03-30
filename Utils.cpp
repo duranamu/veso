@@ -1,11 +1,12 @@
 #include "Utils.h"
+#define FOUND_COUNT_X3 30
 void
 	offerCurrentWorkingDirectoryWithCString(char* pwd)
 {
 	getcwd(pwd,120);
 }
 char*  
-	readSourceCodeFromFile (const char *path ) {
+	readSourcetheStringFromFile (const char *path ) {
     CFDataRef data = nil;
 	CFStringRef str ;
 
@@ -31,11 +32,87 @@ char*
     }
 	return nil;
 }
-void
-	maybeUseful()
+SInt32
+	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFArrayRef stringToFindArray,CFArrayRef replacementStringArray)
 {
-	CFStringRef str ;
-	char* buffer = readSourceCodeFromFile("UIKit/UIView.h"); 
-	str = CFStringCreateWithCString(nil,buffer,kCFStringEncodingASCII);
+	char stream[120];
+	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
+	char match_pattern[120] ;
+	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
+	if(matchCount >=0)
+	{
+		CFRange detailRange ;
+		detailRange = CFRangeMake(found_range[0],found_range[1]-found_range[0]);
+
+		UInt32 arrayCount = CFArrayGetCount(stringToFindArray);
+
+		for(UInt32 i = 0; i< arrayCount ; i++)
+		{
+			CFStringRef stringToFind =  (CFStringRef)CFArrayGetValueAtIndex(stringToFindArray,i);
+			CFStringRef replacementString = (CFStringRef)CFArrayGetValueAtIndex(replacementStringArray,i);
+
+			CFStringFindAndReplace(theString,stringToFind,replacementString,detailRange,0);
+			detailRange.length += CFStringGetLength(replacementString)-CFStringGetLength(stringToFind);
+			CFStringGetCString(theString,stream,200,kCFStringEncodingASCII);
+		}
+	}
+	return matchCount;
+}
+SInt32
+	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToFind,CFStringRef replacementString)
+{
+	char stream[120];
+	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
+	char match_pattern[120];
+	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
+	if(matchCount >=0)
+	{
+		CFRange detailRange ;
+		detailRange = CFRangeMake(found_range[0],found_range[1]-found_range[0]);
+		CFStringFindAndReplace(theString,stringToFind,replacementString,detailRange,0);
+		detailRange.length += CFStringGetLength(replacementString)-CFStringGetLength(stringToFind);
+		CFStringGetCString(theString,stream,200,kCFStringEncodingASCII);	
+	}
+	return matchCount;
+}
+CFMutableStringRef
+	CFMutableStringCreateWithCString(CFAllocatorRef allocator ,const char* cStr,CFIndex maxLength,CFStringEncoding encoding)
+{
+	CFStringRef str = CFStringCreateWithCString(allocator,cStr,encoding);
+	CFMutableStringRef mutableStr = CFStringCreateMutableCopy(allocator,maxLength,str);
 	CFRelease(str);
+	return mutableStr;
+}
+CFMutableArrayRef
+	CFArrayCreateMutableWithObjects(CFAllocatorRef allocator ,const CFArrayCallBacks* callBack,CFTypeRef ref,...)
+{
+	CFMutableArrayRef array = CFArrayCreateMutable(allocator,80,callBack);
+
+	if(ref)
+		CFArrayAppendValue(array,ref);
+
+	va_list argp;
+	va_start(argp , ref);
+	CFTypeRef* para;
+
+	while(1)
+	{
+		para = va_arg(argp , CFTypeRef * );
+		if( para != nil)
+		{
+			CFArrayAppendValue(array,para);
+		}else{
+			break;
+		}
+	}
+	va_end (argp);
+	return array;
 }
