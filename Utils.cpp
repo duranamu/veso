@@ -57,7 +57,6 @@ SInt32
 
 			CFStringFindAndReplace(theString,stringToFind,replacementString,detailRange,0);
 			detailRange.length += CFStringGetLength(replacementString)-CFStringGetLength(stringToFind);
-			CFStringGetCString(theString,stream,200,kCFStringEncodingASCII);
 		}
 	}
 	return matchCount;
@@ -79,7 +78,64 @@ SInt32
 		detailRange = CFRangeMake(found_range[0],found_range[1]-found_range[0]);
 		CFStringFindAndReplace(theString,stringToFind,replacementString,detailRange,0);
 		detailRange.length += CFStringGetLength(replacementString)-CFStringGetLength(stringToFind);
-		CFStringGetCString(theString,stream,200,kCFStringEncodingASCII);	
+	}
+	return matchCount;
+}
+SInt32
+	CFStringMatchPatternforInsertBefore(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToInsert)
+{
+	char stream[120];
+	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
+	char match_pattern[120];
+	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
+	if(matchCount >=0)
+	{
+		CFStringInsert(theString,found_range[0],stringToInsert);
+		matchCount++;
+	}
+	return matchCount;
+}
+SInt32
+	CFStringMatchPatternforInsertAfter(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToInsert)
+{
+	char stream[120];
+	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
+	char match_pattern[120];
+	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
+	if(matchCount >=0)
+	{
+		CFStringInsert(theString,found_range[1],stringToInsert);
+		matchCount++;
+	}
+	return matchCount;
+}
+
+
+SInt32
+	CFStringMatchPatternforDeletion(CFMutableStringRef theString,CFStringRef matchPattern  )
+{
+	char stream[120];
+	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
+	char match_pattern[120];
+	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
+	if(matchCount >=0)
+	{
+		CFRange deleteRange;
+		deleteRange = CFRangeMake(found_range[0] ,found_range[1]-found_range[0]);
+		CFStringDelete(theString,deleteRange);
+		matchCount++;
 	}
 	return matchCount;
 }

@@ -20,7 +20,7 @@ UInt32 excutionModuleOntime(char* stream ,CFStringRef pattern,CFMutableArrayRef 
 	CFRelease(code);
 	return match_count;
 }
-unsigned int
+UInt32
 	accessor(char* stream)
 {
 	int match_count =0;
@@ -33,7 +33,7 @@ unsigned int
 	CFRelease(code);
 	return match_count;
 }
-unsigned int
+UInt32
 	getter(char* stream)
 {
 	UInt32 match_count = 0;
@@ -53,7 +53,7 @@ unsigned int
 
 	return match_count;
 }
-unsigned int
+UInt32
 	setter(char* stream)
 {
 	UInt32 match_count = 0;
@@ -75,7 +75,7 @@ unsigned int
 	CFRelease(code);
 	return match_count;
 }
-unsigned int
+UInt32
     postering(char* stream)
 {
 	UInt32 match_count = 0;
@@ -96,15 +96,15 @@ unsigned int
 	return match_count;
  return match_count;
 }
-unsigned int
+UInt32
 	messaging(char* stream)
 {
 	UInt32 match_count = 0;
 
-	CFStringRef initiate_match_pattern = CFSTR("[\[]*[\ ]*[a-zA-Z]+[\ ]*[a-zA-Z]*[\]]*->[a-zA-Z]+[(][)]");
-    CFStringRef iterate_match_pattern = CFSTR("[\[][\ ]*+[a-zA-Z]+([\ ]+[a-zA-Z]+[\]]+)*->[a-zA-Z]+[(][)]");
+	CFStringRef initiate_match_pattern = CFSTR("[a-zA-Z]+->[a-zA-Z]+[(][)]");
+    CFStringRef iterate_match_pattern = CFSTR("[\[]+[\ ]*[a-zA-Z]+([\ ]+[a-zA-Z]+[\]]+)*->[a-zA-Z]+[(][)]");
 	CFMutableStringRef code = CFMutableStringCreateWithCString(nil,stream,300,kCFStringEncodingASCII);
-	CFMutableArrayRef toFindStrings = CFArrayCreateMutableWithObjects(nil,nil,
+	CFMutableArrayRef toFindStrings = CFArrayCreateMutableWithObjects(nil , nil,
 		CFSTR("->"),CFSTR("()"),nil);
 	CFMutableArrayRef replacementStrings = CFArrayCreateMutableWithObjects(nil,nil,
 		CFSTR(" "),CFSTR("]"),nil);
@@ -113,13 +113,13 @@ unsigned int
 		toFindStrings,replacementStrings) >= 0)
 	{
 		match_count++;
-		CFStringInsert(code,0,CFSTR("["));
+		CFStringMatchPatternforInsertBefore(code,CFSTR("[a-zA-Z0-9_]*(->[a-zA-Z0-9_]+)*[\ ]"),CFSTR("["));
 	}
 	match_count?CFStringGetCString(code,stream,200,kCFStringEncodingASCII):nil;
 	CFRelease(code);
 	return match_count;
 }
-unsigned int
+UInt32
 	iterator(char* stream)
 {
 	UInt32 match_count =0;
@@ -127,7 +127,7 @@ unsigned int
 
 	while(CFStringMatchPatternforReplacement(code,CFSTR("nfor[(].*,.*,.*[)]"),CFSTR("nfor"),CFSTR("for"))>= 0)
 	{
-		CFStringMatchPatternforReplacement(code,CFSTR(",[a-zA-Z\ \.]+[)]"),CFSTR(","),CFSTR("in"));
+		CFStringMatchPatternforReplacement(code,CFSTR(",[a-zA-Z\ \.]+[)]"),CFSTR(","),CFSTR(" in "));
 		CFStringMatchPatternforReplacement(code,CFSTR("for[(a-zA-Z\ \*]+,"),CFSTR(","),CFSTR(" "));
 		match_count++;
 	}
@@ -135,11 +135,36 @@ unsigned int
 	CFRelease(code);
 	return match_count;
 }
-
-void
-VSParserTakeCStringtoStreamFile(char* stream , FILE* objc_file)
+UInt32
+	naming(char* block)
 {
-	unsigned int match_count = 0;
+	UInt32 match_count =0;
+	CFMutableStringRef code = CFMutableStringCreateWithCString(nil,block,300,kCFStringEncodingASCII);
+
+	CFStringMatchPatternforDeletion(code,CFSTR("[a-zA-Z0-9_]+[:][:]"))>= 0 ? match_count++ : nil ;
+	CFStringMatchPatternforInsertBefore(code,CFSTR("[a-zA-Z0-9_\*]+[\ ]"),CFSTR("- "))>= 0? match_count++:nil;
+	CFMutableArrayRef toFindStrings = CFArrayCreateMutableWithObjects(nil,nil,
+		CFSTR("("),CFSTR(","),nil);
+	CFMutableArrayRef replacementStrings = CFArrayCreateMutableWithObjects(nil,nil,
+		CFSTR(":("),CFSTR(":("),nil);
+	CFStringMatchPatternforReplacement(code,CFSTR(".*"),toFindStrings,replacementStrings);
+
+	CFStringMatchPatternforInsertAfter(code,CFSTR("[:][\ ]*[\(][\ ]*[a-zA-Z0-9_\*]+"),CFSTR(")##"));
+	CFStringMatchPatternforInsertAfter(code,CFSTR("[#\ ]+[:][\ ]*[\(][\ ]*[a-zA-Z0-9_\*]+"),CFSTR(")"));
+	CFStringMatchPatternforDeletion(code,CFSTR("[#]+"));
+
+	while(CFStringMatchPatternforInsertBefore(code,CFSTR("([:][\ ]*[\(][\ ]*[a-zA-Z0-9_\*\ \)]+){2}"),CFSTR("%@")) >=0){};
+
+	match_count?CFStringGetCString(code,block,200,kCFStringEncodingASCII):nil;
+	CFRelease(code);
+	CFRelease(toFindStrings);
+	CFRelease(replacementStrings);
+	return match_count;
+}
+void
+	VSParserTakeTokenstoStreamFile(char* stream , FILE* objc_file)
+{
+	UInt32 match_count = 0;
 	match_count		 += getter(stream);
 	match_count      += postering(stream);
 	match_count      +=  messaging(stream); 
@@ -148,5 +173,14 @@ VSParserTakeCStringtoStreamFile(char* stream , FILE* objc_file)
 	match_count		 +=  setter(stream);
 	match_count      +=  iterator(stream);
 	if(match_count)
-		printf("%s",stream);
+		printf("%s\n",stream);
 }
+void
+	VSParserTakeBlockstoStreamFile(char* block , FILE* objc_file)
+{
+	UInt32 match_count = 0;
+	match_count +=  naming(block);
+	if(match_count)
+		printf("%s\n",block);
+}
+	

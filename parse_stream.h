@@ -1,3 +1,4 @@
 #pragma once
 #include "Utils.h"
-void VSParserTakeCStringtoStreamFile(char*,FILE*);
+void VSParserTakeTokenstoStreamFile(char*,FILE*);
+void VSParserTakeBlockstoStreamFile(char*,FILE*);
