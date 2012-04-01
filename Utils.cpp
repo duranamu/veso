@@ -1,5 +1,19 @@
 #include "Utils.h"
 #define FOUND_COUNT_X3 30
+char*
+	CStringFromCFMutableString(CFMutableStringRef theString)
+{
+	char* cStr = (char*)malloc(sizeof(char)*CFStringGetLength(theString)+1);
+	CFStringGetCString(theString,cStr,strlen(cStr),kCFStringEncodingASCII);
+	return cStr;
+}
+char*
+	CStringFromCFString(CFStringRef theString)
+{
+	char* cStr = (char*)malloc(sizeof(char)*CFStringGetLength(theString)+1);
+	CFStringGetCString(theString,cStr,strlen(cStr),kCFStringEncodingASCII);
+	return cStr;
+}
 void
 	offerCurrentWorkingDirectoryWithCString(char* pwd)
 {
@@ -35,12 +49,11 @@ char*
 SInt32
 	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFArrayRef stringToFindArray,CFArrayRef replacementStringArray)
 {
-	char stream[120];
-	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	char* stream = CStringFromCFMutableString(theString);
 	const char * erro = nil;
 	int offset = -1;  
 	int found_range[FOUND_COUNT_X3];
-	char match_pattern[120] ;
+	char* match_pattern = CStringFromCFString(matchPattern);
 	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
 	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
 	if(matchCount >=0)
@@ -59,17 +72,18 @@ SInt32
 			detailRange.length += CFStringGetLength(replacementString)-CFStringGetLength(stringToFind);
 		}
 	}
+	free(stream);
+	free(match_pattern);
 	return matchCount;
 }
 SInt32
 	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToFind,CFStringRef replacementString)
 {
-	char stream[120];
-	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	char* stream = CStringFromCFMutableString(theString);
 	const char * erro = nil;
 	int offset = -1;  
 	int found_range[FOUND_COUNT_X3];
-	char match_pattern[120];
+	char* match_pattern = CStringFromCFString(matchPattern);
 	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
 	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
 	if(matchCount >=0)
@@ -79,55 +93,76 @@ SInt32
 		CFStringFindAndReplace(theString,stringToFind,replacementString,detailRange,0);
 		detailRange.length += CFStringGetLength(replacementString)-CFStringGetLength(stringToFind);
 	}
+	free(stream);
 	return matchCount;
 }
 SInt32
-	CFStringMatchPatternforInsertBefore(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToInsert)
+	CFStringMatchPatternforPreInsert(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToInsert)
 {
-	char stream[120];
-	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	char* stream = CStringFromCFMutableString(theString);
 	const char * erro = nil;
 	int offset = -1;  
 	int found_range[FOUND_COUNT_X3];
-	char match_pattern[120];
-	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	char* match_pattern = CStringFromCFString(matchPattern);
 	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
 	if(matchCount >=0)
 	{
 		CFStringInsert(theString,found_range[0],stringToInsert);
 		matchCount++;
 	}
+	free(stream);
+	free(match_pattern);
 	return matchCount;
 }
 SInt32
-	CFStringMatchPatternforInsertAfter(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToInsert)
+	CFStringMatchPatternforPostInsert(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToInsert)
 {
-	char stream[120];
-	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	char* stream = CStringFromCFMutableString(theString);
+	char* match_pattern = CStringFromCFString(matchPattern);
 	const char * erro = nil;
 	int offset = -1;  
 	int found_range[FOUND_COUNT_X3];
-	char match_pattern[120];
-	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
 	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
 	if(matchCount >=0)
 	{
 		CFStringInsert(theString,found_range[1],stringToInsert);
 		matchCount++;
 	}
+	free(stream);
+	free(match_pattern);
 	return matchCount;
 }
-
-
 SInt32
-	CFStringMatchPatternforDeletion(CFMutableStringRef theString,CFStringRef matchPattern  )
+	CFStringMatchPatternforMultiPreInsert(CFMutableStringRef theString,CFStringRef matchPattern ,CFStringRef stringToInsert)
 {
-	char stream[120];
-	CFStringGetCString(theString,stream,120,kCFStringEncodingASCII);
+	char* stream = CStringFromCFMutableString(theString);
 	const char * erro = nil;
 	int offset = -1;  
 	int found_range[FOUND_COUNT_X3];
-	char match_pattern[120];
+	char* match_pattern = CStringFromCFString(matchPattern);
+	SInt32 matchCount =  0;
+	UInt32 startOffsetForIteration = 0;
+	while(pcre_exec(
+			pcre_compile(match_pattern, 0, &erro, &offset, nil),
+			nil, stream, strlen(stream), startOffsetForIteration, 0, found_range, FOUND_COUNT_X3
+			)>= 0 
+		 )
+	{
+		CFStringInsert(theString,found_range[0] + CFStringGetLength(stringToInsert)*(matchCount++),stringToInsert);
+		startOffsetForIteration = found_range[1] ;
+	}
+	free(stream);
+	free(match_pattern);
+	return matchCount;
+}
+SInt32
+	CFStringMatchPatternforDeletion(CFMutableStringRef theString,CFStringRef matchPattern )
+{
+	char* stream = CStringFromCFMutableString(theString);
+	char* match_pattern = CStringFromCFString(matchPattern);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
 	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
 	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
 	if(matchCount >=0)
@@ -137,8 +172,37 @@ SInt32
 		CFStringDelete(theString,deleteRange);
 		matchCount++;
 	}
+	free(stream);
+	free(match_pattern);
 	return matchCount;
 }
+UniChar*
+	CFStringMatchPatternforExtraction(CFMutableStringRef theString,CFStringRef matchPattern )
+{
+	CFMutableStringRef deletedString ;
+	char* stream = CStringFromCFMutableString(theString);
+	char* match_pattern = CStringFromCFString(matchPattern);
+	const char * erro = nil;
+	int offset = -1;  
+	int found_range[FOUND_COUNT_X3];
+	CFStringGetCString(matchPattern,match_pattern,120,kCFStringEncodingASCII);
+	UniChar* deleteCStr ;
+	SInt32 matchCount = (pcre_exec(pcre_compile(match_pattern, 0, &erro, &offset, nil), nil, stream, strlen(stream), 0, 0, found_range, FOUND_COUNT_X3));
+	if(matchCount >=0)
+	{
+		CFRange deleteRange;
+		deleteRange = CFRangeMake(found_range[0] ,found_range[1]-found_range[0]);
+		deleteCStr = (UniChar*)malloc(sizeof(UniChar)*(deleteRange.length+1));
+		CFStringGetCharacters(theString,deleteRange,deleteCStr);
+		CFStringDelete(theString,deleteRange);
+		matchCount++;
+		free(deleteCStr);
+	}
+	free(stream);
+	free(match_pattern);
+	return deleteCStr;
+}
+
 CFMutableStringRef
 	CFMutableStringCreateWithCString(CFAllocatorRef allocator ,const char* cStr,CFIndex maxLength,CFStringEncoding encoding)
 {

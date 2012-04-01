@@ -12,12 +12,21 @@ SInt32
 SInt32
 	CFStringMatchPatternforReplacement(CFMutableStringRef theString,CFStringRef matchPattern,CFStringRef stringToFind,CFStringRef replacementString);
 SInt32
-	CFStringMatchPatternforInsertBefore(CFMutableStringRef theString,CFStringRef matchPattern ,CFStringRef stringToInsert);
+	CFStringMatchPatternforPreInsert(CFMutableStringRef theString,CFStringRef matchPattern ,CFStringRef stringToInsert);
 SInt32
 	CFStringMatchPatternforDeletion(CFMutableStringRef theString,CFStringRef matchPattern );
+UniChar*
+	CFStringMatchPatternforExtraction(CFMutableStringRef theString,CFStringRef matchPattern );
 SInt32
-	CFStringMatchPatternforInsertAfter(CFMutableStringRef theString,CFStringRef matchPattern ,CFStringRef stringToInsert);
+	CFStringMatchPatternforPostInsert(CFMutableStringRef theString,CFStringRef matchPattern ,CFStringRef stringToInsert);
 
+SInt32
+	CFStringMatchPatternforMultiPreInsert(CFMutableStringRef theString,CFStringRef matchPattern ,CFStringRef stringToInsert);
+
+char* 
+	CStringFromCFMutableString(CFMutableStringRef theString);
+char* 
+	CStringFromCFString(CFStringRef theString);
 
 CFMutableStringRef
 	CFMutableStringCreateWithCString(CFAllocatorRef allocator ,const char* cStr,CFIndex maxLength,CFStringEncoding encoding);

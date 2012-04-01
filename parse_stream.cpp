@@ -113,7 +113,7 @@ UInt32
 		toFindStrings,replacementStrings) >= 0)
 	{
 		match_count++;
-		CFStringMatchPatternforInsertBefore(code,CFSTR("[a-zA-Z0-9_]*(->[a-zA-Z0-9_]+)*[\ ]"),CFSTR("["));
+		CFStringMatchPatternforPreInsert(code,CFSTR("[a-zA-Z0-9_]*(->[a-zA-Z0-9_]+)*[\ ]"),CFSTR("["));
 	}
 	match_count?CFStringGetCString(code,stream,200,kCFStringEncodingASCII):nil;
 	CFRelease(code);
@@ -142,19 +142,39 @@ UInt32
 	CFMutableStringRef code = CFMutableStringCreateWithCString(nil,block,300,kCFStringEncodingASCII);
 
 	CFStringMatchPatternforDeletion(code,CFSTR("[a-zA-Z0-9_]+[:][:]"))>= 0 ? match_count++ : nil ;
-	CFStringMatchPatternforInsertBefore(code,CFSTR("[a-zA-Z0-9_\*]+[\ ]"),CFSTR("- "))>= 0? match_count++:nil;
+	CFStringMatchPatternforPreInsert(code,CFSTR("[a-zA-Z0-9_\*]+[\ ]"),CFSTR("- "))>= 0? match_count++:nil;
 	CFMutableArrayRef toFindStrings = CFArrayCreateMutableWithObjects(nil,nil,
 		CFSTR("("),CFSTR(","),nil);
 	CFMutableArrayRef replacementStrings = CFArrayCreateMutableWithObjects(nil,nil,
 		CFSTR(":("),CFSTR(":("),nil);
 	CFStringMatchPatternforReplacement(code,CFSTR(".*"),toFindStrings,replacementStrings);
 
-	CFStringMatchPatternforInsertAfter(code,CFSTR("[:][\ ]*[\(][\ ]*[a-zA-Z0-9_\*]+"),CFSTR(")##"));
-	CFStringMatchPatternforInsertAfter(code,CFSTR("[#\ ]+[:][\ ]*[\(][\ ]*[a-zA-Z0-9_\*]+"),CFSTR(")"));
-	CFStringMatchPatternforDeletion(code,CFSTR("[#]+"));
 
-	while(CFStringMatchPatternforInsertBefore(code,CFSTR("([:][\ ]*[\(][\ ]*[a-zA-Z0-9_\*\ \)]+){2}"),CFSTR("%@")) >=0){};
+	CFStringMatchPatternforMultiPreInsert(code ,CFSTR("[\ ]+[a-zA-Z0-9\ ]+[:]"),CFSTR(")"));
 
+	CFStringMatchPatternforMultiPreInsert(code,CFSTR("[:][\ ]*[\(]"),CFSTR("%@"));
+
+
+	const UniChar* deleteCStr;
+	deleteCStr = CFStringMatchPatternforExtraction(code,CFSTR("[a-zA-Z_0-9\ ]+%@"));
+
+	CFMutableStringRef messageId = CFMutableStringCreateWithCString(nil,(const char*)deleteCStr,strlen((const char*)deleteCStr),kCFStringEncodingASCII);
+	
+	CFStringMatchPatternforDeletion(messageId,CFSTR("%@"));
+	CFArrayRef separatedArray ;
+	CFTypeRef  iterator;
+	separatedArray = CFStringCreateArrayBySeparatingStrings(nil,messageId,CFSTR("_"));
+	for(CFIndex i =0 ;i< CFArrayGetCount(separatedArray); i++)
+	{
+		iterator = CFArrayGetValueAtIndex(separatedArray,i);
+		CFLog(0,CFSTR("%@"),iterator);
+	}
+
+
+	CFStringMatchPatternforPreInsert(code,CFSTR("[:][\ ]*[\(]"),CFSTR(" %@"));
+
+	match_count?CFStringGetCString(code,block,200,kCFStringEncodingASCII):nil;
+	
 	match_count?CFStringGetCString(code,block,200,kCFStringEncodingASCII):nil;
 	CFRelease(code);
 	CFRelease(toFindStrings);
